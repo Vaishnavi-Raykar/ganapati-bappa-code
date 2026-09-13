@@ -267,6 +267,83 @@ def generate():
     print(f"Extracted {len(processed_paths)} exact Bappa reference contours!")
 
     # ===========================================================
+    # 1.5 REALISTIC MODAK IN HAND ON LEFT SIDE OF IMAGE (Viewer's Left Side)
+    # ===========================================================
+    # Traced directly from assets/new_modak_reference.png (realistic teardrop/onion modak shape)
+    # Positioned near fingers on left side of image (cx=68, cy=214, w=34, h=40)
+    # Filled with Orange color [255, 140, 0] at step_order 24 (end of sketch)
+    modak_ref_img = cv2.imread('assets/new_modak_reference.png', cv2.IMREAD_UNCHANGED)
+    if modak_ref_img is not None and modak_ref_img.shape[2] == 4:
+        alpha_channel = modak_ref_img[:, :, 3]
+        _, alpha_thresh = cv2.threshold(alpha_channel, 10, 255, cv2.THRESH_BINARY)
+        m_cnts, _ = cv2.findContours(alpha_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        c_m_outer = max(m_cnts, key=cv2.contourArea)
+        pts_m = c_m_outer[:, 0, :].astype(np.float32)
+        mx1, mx2 = pts_m[:, 0].min(), pts_m[:, 0].max()
+        my1, my2 = pts_m[:, 1].min(), pts_m[:, 1].max()
+        mw_ref, mh_ref = mx2 - mx1, my2 - my1
+
+        target_w, target_h = 34.0, 40.0
+        target_cx, target_cy = 68.0, 214.0
+
+        norm_m = np.zeros_like(pts_m)
+        norm_m[:, 0] = (pts_m[:, 0] - mx1) / mw_ref - 0.5
+        norm_m[:, 1] = (pts_m[:, 1] - my1) / mh_ref - 0.5
+
+        # Downsample points for smooth line art rendering (every 4th point)
+        sub_pts = norm_m[::4]
+        modak_outer_ref = []
+        for p in sub_pts:
+            rx = target_cx + p[0] * target_w
+            ry = target_cy + p[1] * target_h
+            modak_outer_ref.append((round(rx, 2), round(ry, 2)))
+
+        # 6 Organic curved pleat ridges radiating from top tip down to base
+        top_tip = (target_cx, target_cy - target_h * 0.46)
+        pleat_offsets = [-0.35, -0.20, -0.05, 0.10, 0.25, 0.38]
+        modak_pleats_ref = []
+        for off in pleat_offsets:
+            pts_curve = []
+            for t in np.linspace(0, 1, 12):
+                px = (1-t)**2 * top_tip[0] + 2*(1-t)*t * (target_cx + off * target_w * 1.2) + t**2 * (target_cx + off * target_w * 0.85)
+                py = (1-t)**2 * top_tip[1] + 2*(1-t)*t * (target_cy + target_h * 0.05) + t**2 * (target_cy + target_h * 0.46)
+                pts_curve.append((round(px, 2), round(py, 2)))
+            modak_pleats_ref.append(pts_curve)
+
+        # Convert outer body (Orange fill at step_order 24)
+        modak_outer_pts = [(round(p[0] * bappa_scale_x + bappa_offset_x, 2), round(p[1] * bappa_scale_y + bappa_offset_y, 2)) for p in modak_outer_ref]
+        processed_paths.append({
+            'id': path_id_counter,
+            'name': f"modak_outer_{path_id_counter}",
+            'category': 'Right Hand',
+            'step_order': 24,  # Fills orange at the end of sketch completion!
+            'points': modak_outer_pts,
+            'bezier_segments': [],
+            'width': 5.5,
+            'is_closed': True,
+            'is_filled': True,
+            'fill_color': [255, 140, 0]  # Traditional Orange Fill
+        })
+        path_id_counter += 1
+
+        # Convert pleat ridges (black line art overlay)
+        for pleat_ref in modak_pleats_ref:
+            pleat_pts = [(round(p[0] * bappa_scale_x + bappa_offset_x, 2), round(p[1] * bappa_scale_y + bappa_offset_y, 2)) for p in pleat_ref]
+            processed_paths.append({
+                'id': path_id_counter,
+                'name': f"modak_pleat_{path_id_counter}",
+                'category': 'Right Hand',
+                'step_order': 24,
+                'points': pleat_pts,
+                'bezier_segments': [],
+                'width': 4.5,
+                'is_closed': False,
+                'is_filled': False,
+                'fill_color': None
+            })
+            path_id_counter += 1
+
+    # ===========================================================
     # 2. MOOSHAK MOUSE - Direct contour trace, independent group
     #    Placed beside Bappa's right foot with clear white space gap.
     # ===========================================================

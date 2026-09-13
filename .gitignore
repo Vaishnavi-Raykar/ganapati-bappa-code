@@ -36,3 +36,5 @@ Thumbs.db
 # Pygame / Local test outputs
 *.png
 !assets/reference_image.png
+!assets/new_mouse_reference.png
+!assets/new_modak_reference.png
