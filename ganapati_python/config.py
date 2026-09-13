@@ -27,9 +27,9 @@ DRAW_SPEED = 1.8                    # Default draw speed multiplier (faster defa
 BASE_POINTS_PER_FRAME = 7.0         # Accelerated point progression per frame
 PEN_TRANSITION_SPEED = 90.0         # Fast pen movement between stroke paths (at 2700x3300)
 FPS = 60                            # Target 60 FPS
-TOTAL_DURATION_SEC = 7.5            # ~7.5 seconds total completion time
+TOTAL_DURATION_SEC = 8.0            # ~8.0 seconds total completion time
 
-# Drawing Order Sequence (24 anatomical steps)
+# Drawing Order Sequence (25 anatomical steps including Mooshak mouse)
 DRAWING_SEQUENCE = [
     "Crown",
     "Head Outline",
@@ -54,5 +54,6 @@ DRAWING_SEQUENCE = [
     "Legs",
     "Right Leg",
     "Feet",
-    "Small Details"
+    "Small Details",
+    "Mooshak (Mouse)"
 ]
